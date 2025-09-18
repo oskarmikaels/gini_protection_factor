@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="sv">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -70,15 +70,15 @@
 </head>
 <body>
     <div class="container">
-        <h1>Protection Factor Kurva</h1>
+        <h1>Protection Factor Curve</h1>
         
         <div class="controls">
             <div class="control-group">
-                <label for="members">Antal Medlemmar: <span id="membersValue">3</span></label>
+                <label for="members">Number of Members: <span id="membersValue">3</span></label>
                 <input type="range" id="members" min="2" max="8" value="3">
             </div>
             <div class="control-group">
-                <label for="gini">Gini-koefficient: <span id="giniValue">0.3</span></label>
+                <label for="gini">Gini Coefficient: <span id="giniValue">0.3</span></label>
                 <input type="range" id="gini" min="0.1" max="1.0" step="0.1" value="0.3">
             </div>
         </div>
@@ -88,7 +88,7 @@
         </div>
 
         <div class="values">
-            <h3>Protection Factor Värden</h3>
+            <h3>Protection Factor Values</h3>
             <div id="valuesList"></div>
         </div>
     </div>
@@ -179,7 +179,7 @@
                         x: {
                             title: {
                                 display: true,
-                                text: 'Medlem (Position när de gick med)',
+                                text: 'Member (Position when they joined)',
                                 font: {
                                     size: 14,
                                     weight: 'bold'
@@ -193,7 +193,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: `Protection Factor: e^((antal_medlemmar - position) × G)`,
+                            text: `Protection Factor: e^((number_of_members - position) × G)`,
                             font: {
                                 size: 16,
                                 weight: 'bold'
