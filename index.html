@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -84,9 +85,32 @@
             font-family: 'Courier New', monospace;
             color: #d63384;
         }
-        .description em {
+        .ownership-example {
+            margin-top: 20px;
+            background: #f0f8f0;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+        }
+        .ownership-example h3 {
+            color: #155724;
+            margin-top: 0;
+        }
+        .ownership-member {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #c3e6cb;
+            font-size: 14px;
+        }
+        .ownership-member:last-child {
+            border-bottom: none;
+        }
+        .example-note {
+            margin-top: 15px;
             color: #6c757d;
             font-style: italic;
+            font-size: 14px;
         }
         .values h3 {
             margin-top: 0;
@@ -106,168 +130,197 @@
 <body>
     <div class="container">
         <h1>Protection Factor Curve</h1>
-        
-        <div class="controls">
-            <div class="control-group">
-                <label for="members">Number of Members: <span id="membersValue">3</span></label>
-                <input type="range" id="members" min="2" max="8" value="3">
-            </div>
-            <div class="control-group">
-                <label for="gini">Gini - α (0.3 default): <span id="giniValue">0.3</span></label>
-                <input type="range" id="gini" min="0.1" max="1.0" step="0.1" value="0.3">
-            </div>
+
+```
+    <div class="controls">
+        <div class="control-group">
+            <label for="members">Number of Members: <span id="membersValue">3</span></label>
+            <input type="range" id="members" min="2" max="8" value="3">
         </div>
-
-        <div class="chart-container">
-            <canvas id="protectionChart"></canvas>
-        </div>
-
-        <div class="description">
-            <h3>Understanding the Protection Factor Curve</h3>
-            <p>This curve demonstrates how the <strong>Protection Factor</strong> rewards early members in a collaborative ownership model. The mathematical formula <code>e^((number_of_members - position) × α)</code> creates an exponential advantage for those who joined earlier.</p>
-            
-            <h4>Key Insights:</h4>
-            <ul>
-                <li><strong>Position 1 (Founder):</strong> Always receives the highest protection factor, growing exponentially as more members join</li>
-                <li><strong>Early Members:</strong> Get substantial protection bonuses that reflect their early risk-taking</li>
-                <li><strong>Latest Member:</strong> Always has factor 1.0 (no bonus) - serves as the baseline</li>
-                <li><strong>Gini Coefficient (α):</strong> Controls curve steepness - higher values create bigger gaps between early and late joiners</li>
-            </ul>
-
-            <p><em>The curve becomes steeper and more pronounced as the group grows, ensuring founders maintain their advantage even in larger collectives.</em></p>
-        </div>
-
-        <div class="values">
-            <h3>Protection Factor Values</h3>
-            <div id="valuesList"></div>
+        <div class="control-group">
+            <label for="gini">Gini - α (0.3 default): <span id="giniValue">0.3</span></label>
+            <input type="range" id="gini" min="0.1" max="1.0" step="0.1" value="0.3">
         </div>
     </div>
 
-    <script>
-        const ctx = document.getElementById('protectionChart').getContext('2d');
-        const membersSlider = document.getElementById('members');
-        const giniSlider = document.getElementById('gini');
-        const membersValue = document.getElementById('membersValue');
-        const giniValue = document.getElementById('giniValue');
-        const valuesList = document.getElementById('valuesList');
+    <div class="chart-container">
+        <canvas id="protectionChart"></canvas>
+    </div>
 
-        let chart;
+    <div class="description">
+        <h3>Understanding the Protection Factor Curve</h3>
+        <p>This curve demonstrates how the <strong>Protection Factor</strong> rewards early members in a collaborative ownership model. The mathematical formula <code>e^((number_of_members - position) × α)</code> creates an exponential advantage for those who joined earlier.</p>
+        
+        <h4>Key Insights:</h4>
+        <ul>
+            <li><strong>Position 1 (Founder):</strong> Always receives the highest protection factor, growing exponentially as more members join</li>
+            <li><strong>Early Members:</strong> Get substantial protection bonuses that reflect their early risk-taking</li>
+            <li><strong>Latest Member:</strong> Always has factor 1.0 (no bonus) - serves as the baseline</li>
+            <li><strong>Gini Coefficient (α):</strong> Controls curve steepness - higher values create bigger gaps between early and late joiners</li>
+        </ul>
 
-        function calculateProtectionFactor(position, totalMembers, gini) {
-            return Math.exp((totalMembers - position) * gini);
+        <p><em>The curve becomes steeper and more pronounced as the group grows, ensuring founders maintain their advantage even in larger collectives.</em></p>
+    </div>
+
+    <div class="values">
+        <h3>Protection Factor Values</h3>
+        <div id="valuesList"></div>
+    </div>
+
+    <div class="ownership-example">
+        <h3>Ownership Example</h3>
+        <p><strong>Scenario:</strong> All members have equal contribution scores</p>
+        <div id="ownershipList"></div>
+        <p class="example-note"><em>Notice how the protection factor ensures founders maintain larger ownership shares even when all members contribute equally.</em></p>
+    </div>
+</div>
+
+<script>
+    const ctx = document.getElementById('protectionChart').getContext('2d');
+    const membersSlider = document.getElementById('members');
+    const giniSlider = document.getElementById('gini');
+    const membersValue = document.getElementById('membersValue');
+    const giniValue = document.getElementById('giniValue');
+    const valuesList = document.getElementById('valuesList');
+    const ownershipList = document.getElementById('ownershipList');
+
+    let chart;
+
+    function calculateProtectionFactor(position, totalMembers, gini) {
+        return Math.exp((totalMembers - position) * gini);
+    }
+
+    function updateChart() {
+        const totalMembers = parseInt(membersSlider.value);
+        const gini = parseFloat(giniSlider.value);
+        
+        membersValue.textContent = totalMembers;
+        giniValue.textContent = gini;
+
+        // Skapa data för grafen
+        const labels = [];
+        const data = [];
+        const memberNames = ['A', 'B', 'K', 'L', 'M', 'N', 'O', 'P'];
+        
+        for (let position = 1; position <= totalMembers; position++) {
+            labels.push(`${memberNames[position-1]} (pos ${position})`);
+            data.push(calculateProtectionFactor(position, totalMembers, gini));
         }
 
-        function updateChart() {
-            const totalMembers = parseInt(membersSlider.value);
-            const gini = parseFloat(giniSlider.value);
+        // Uppdatera värdelistan
+        valuesList.innerHTML = '';
+        for (let i = 0; i < totalMembers; i++) {
+            const member = document.createElement('div');
+            member.className = 'member';
+            member.innerHTML = `
+                <span><strong>${memberNames[i]} (Position ${i+1})</strong></span>
+                <span>${data[i].toFixed(2)}</span>
+            `;
+            valuesList.appendChild(member);
+        }
+
+        // Uppdatera ägarskapsexempel (alla har samma grundpoäng = 100)
+        const baseScore = 100;
+        const totalWeightedScore = data.reduce((sum, factor) => sum + (baseScore * factor), 0);
+        
+        ownershipList.innerHTML = '';
+        for (let i = 0; i < totalMembers; i++) {
+            const weightedScore = baseScore * data[i];
+            const ownershipPercent = (weightedScore / totalWeightedScore * 100).toFixed(1);
             
-            membersValue.textContent = totalMembers;
-            giniValue.textContent = gini;
+            const ownershipMember = document.createElement('div');
+            ownershipMember.className = 'ownership-member';
+            ownershipMember.innerHTML = `
+                <span><strong>${memberNames[i]}</strong> (Score: ${baseScore}, Factor: ${data[i].toFixed(2)})</span>
+                <span><strong>${ownershipPercent}%</strong></span>
+            `;
+            ownershipList.appendChild(ownershipMember);
+        }
 
-            // Skapa data för grafen
-            const labels = [];
-            const data = [];
-            const memberNames = ['A', 'B', 'K', 'L', 'M', 'N', 'O', 'P'];
-            
-            for (let position = 1; position <= totalMembers; position++) {
-                labels.push(`${memberNames[position-1]} (pos ${position})`);
-                data.push(calculateProtectionFactor(position, totalMembers, gini));
-            }
+        if (chart) {
+            chart.destroy();
+        }
 
-            // Uppdatera värdelistan
-            valuesList.innerHTML = '';
-            for (let i = 0; i < totalMembers; i++) {
-                const member = document.createElement('div');
-                member.className = 'member';
-                member.innerHTML = `
-                    <span><strong>${memberNames[i]} (Position ${i+1})</strong></span>
-                    <span>${data[i].toFixed(2)}</span>
-                `;
-                valuesList.appendChild(member);
-            }
-
-            if (chart) {
-                chart.destroy();
-            }
-
-            chart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Protection Factor',
-                        data: data,
-                        borderColor: 'rgb(75, 192, 192)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: 'rgb(75, 192, 192)',
-                        pointBorderColor: 'white',
-                        pointBorderWidth: 2,
-                        pointRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            title: {
-                                display: true,
-                                text: 'Protection Factor',
-                                font: {
-                                    size: 14,
-                                    weight: 'bold'
-                                }
-                            },
-                            grid: {
-                                color: 'rgba(0,0,0,0.1)'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Member (Position when they joined)',
-                                font: {
-                                    size: 14,
-                                    weight: 'bold'
-                                }
-                            },
-                            grid: {
-                                color: 'rgba(0,0,0,0.1)'
-                            }
-                        }
-                    },
-                    plugins: {
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Protection Factor',
+                    data: data,
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: 'rgb(75, 192, 192)',
+                    pointBorderColor: 'white',
+                    pointBorderWidth: 2,
+                    pointRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: false,
                         title: {
                             display: true,
-                            text: `Protection Factor: e^((number_of_members - position) × G)`,
+                            text: 'Protection Factor',
                             font: {
-                                size: 16,
+                                size: 14,
                                 weight: 'bold'
-                            },
-                            padding: 20
+                            }
                         },
-                        legend: {
-                            display: false
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
                         }
                     },
-                    animation: {
-                        duration: 750,
-                        easing: 'easeInOutQuart'
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Member (Position when they joined)',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
                     }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `Protection Factor: e^((number_of_members - position) × G)`,
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        },
+                        padding: 20
+                    },
+                    legend: {
+                        display: false
+                    }
+                },
+                animation: {
+                    duration: 750,
+                    easing: 'easeInOutQuart'
                 }
-            });
-        }
+            }
+        });
+    }
 
-        // Event listeners
-        membersSlider.addEventListener('input', updateChart);
-        giniSlider.addEventListener('input', updateChart);
+    // Event listeners
+    membersSlider.addEventListener('input', updateChart);
+    giniSlider.addEventListener('input', updateChart);
 
-        // Initial chart
-        updateChart();
-    </script>
+    // Initial chart
+    updateChart();
+</script>
+```
+
 </body>
 </html>
